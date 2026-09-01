@@ -16,6 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const savedState = loadStateFromStorage();
   const initialState = savedState || {
     ...DEFAULT_CONFIG,
+    image: {
+      url: "",
+      blur: 0,
+      brightness: 100,
+    },
     mesh: {
       bgColor: "#0f172a",
       blur: 20,
@@ -94,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentGeneratedCode = renderPreview(state, handleMeshDrag);
       saveStateToStorage(state);
 
-      if (state.activeTab === "mesh") {
+      if (state.activeTab === "mesh" && state.mesh) {
         renderMeshControlsList(state.mesh.points);
       }
 
@@ -108,13 +113,91 @@ document.addEventListener("DOMContentLoaded", () => {
     history.getCurrentState(),
     handleMeshDrag,
   );
-  renderMeshControlsList(history.getCurrentState().mesh.points);
+  if (history.getCurrentState().mesh) {
+    renderMeshControlsList(history.getCurrentState().mesh.points);
+  }
 
   // Bind Sidebar Tabs
   bindTabEvents((tabKey) => {
     const currentState = history.getCurrentState();
     currentState.activeTab = tabKey;
     history.pushState(currentState);
+  });
+
+  // Solid Inputs
+  const solidColorInput = $("#solid-color-input");
+  const solidHexInput = $("#solid-hex-input");
+  const solidOpacityInput = $("#solid-opacity");
+
+  solidColorInput?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    state.solid.color = e.target.value;
+    if (solidHexInput) solidHexInput.value = e.target.value;
+    history.pushState(state);
+  });
+
+  solidOpacityInput?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    state.solid.opacity = Number(e.target.value);
+    history.pushState(state);
+  });
+
+  // Image Inputs & Drop Zone Handler
+  const imageFileInput = $("#image-file-input");
+  const imageDropZone = $("#drop-zone");
+  const imageBlurInput = $("#image-blur");
+  const imageBrightnessInput = $("#image-brightness");
+
+  const handleImageFile = (file) => {
+    if (!file || !file.type.startsWith("image/")) {
+      showToast("Please upload a valid image file");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const state = history.getCurrentState();
+      if (!state.image) state.image = {};
+      state.image.url = e.target.result;
+      history.pushState(state);
+      showToast("Image uploaded successfully!");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  imageFileInput?.addEventListener("change", (e) => {
+    if (e.target.files.length) handleImageFile(e.target.files[0]);
+  });
+
+  imageDropZone?.addEventListener("click", () => imageFileInput?.click());
+
+  imageDropZone?.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    imageDropZone.classList.add("drag-over");
+  });
+
+  imageDropZone?.addEventListener("dragleave", () =>
+    imageDropZone.classList.remove("drag-over"),
+  );
+
+  imageDropZone?.addEventListener("drop", (e) => {
+    e.preventDefault();
+    imageDropZone.classList.remove("drag-over");
+    if (e.dataTransfer.files.length) handleImageFile(e.dataTransfer.files[0]);
+  });
+
+  imageBlurInput?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    if (!state.image) state.image = {};
+    state.image.blur = Number(e.target.value);
+    history.pushState(state);
+  });
+
+  imageBrightnessInput?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    if (!state.image) state.image = {};
+    state.image.brightness = Number(e.target.value);
+    history.pushState(state);
   });
 
   // Mesh Controls
@@ -146,7 +229,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const triggerRandomize = () => {
     const state = history.getCurrentState();
     if (state.activeTab === "solid") {
-      state.solid.color = getRandomHex();
+      const newHex = getRandomHex();
+      state.solid.color = newHex;
+      if (solidColorInput) solidColorInput.value = newHex;
+      if (solidHexInput) solidHexInput.value = newHex;
     } else if (state.activeTab === "mesh") {
       state.mesh.bgColor = getRandomHex();
       state.mesh.points.forEach((p) => {
