@@ -55,6 +55,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentGeneratedCode = "";
 
+  const renderGradientStopsList = (stops) => {
+    const container = $("#gradient-stops-list");
+    if (!container) return;
+    container.innerHTML = "";
+
+    stops.forEach((stop, index) => {
+      const row = document.createElement("div");
+      row.className = "gradient-stop-row";
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.gap = "8px";
+      row.style.marginBottom = "8px";
+
+      row.innerHTML = `
+        <input type="color" value="${stop.color}" data-index="${index}" class="stop-color-input">
+        <input type="range" min="0" max="100" value="${stop.position}" data-index="${index}" class="stop-pos-input" style="flex:1;">
+        <span>${stop.position}%</span>
+        ${stops.length > 2 ? `<button class="btn btn-small btn-secondary remove-stop-btn" data-index="${index}">&times;</button>` : ""}
+      `;
+      container.appendChild(row);
+    });
+
+    container.querySelectorAll(".stop-color-input").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        const idx = Number(e.target.getAttribute("data-index"));
+        const state = history.getCurrentState();
+        state.gradient.stops[idx].color = e.target.value;
+        history.pushState(state);
+      });
+    });
+
+    container.querySelectorAll(".stop-pos-input").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        const idx = Number(e.target.getAttribute("data-index"));
+        const state = history.getCurrentState();
+        state.gradient.stops[idx].position = Number(e.target.value);
+        history.pushState(state);
+        renderGradientStopsList(state.gradient.stops);
+      });
+    });
+
+    container.querySelectorAll(".remove-stop-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const idx = Number(e.currentTarget.getAttribute("data-index"));
+        const state = history.getCurrentState();
+        state.gradient.stops.splice(idx, 1);
+        history.pushState(state);
+        renderGradientStopsList(state.gradient.stops);
+      });
+    });
+  };
+
   const renderMeshControlsList = (points) => {
     const list = $("#mesh-anchors-list");
     if (!list) return;
@@ -112,6 +164,9 @@ document.addEventListener("DOMContentLoaded", () => {
       currentGeneratedCode = renderPreview(state, handleMeshDrag);
       saveStateToStorage(state);
 
+      if (state.activeTab === "gradient" && state.gradient) {
+        renderGradientStopsList(state.gradient.stops);
+      }
       if (state.activeTab === "mesh" && state.mesh) {
         renderMeshControlsList(state.mesh.points);
       }
@@ -128,8 +183,11 @@ document.addEventListener("DOMContentLoaded", () => {
     history.getCurrentState(),
     handleMeshDrag,
   );
+  if (history.getCurrentState().gradient) {
+    renderGradientStopsList(history.getCurrentState().gradient.stops);
+  }
 
-  // Tab switching
+  // Bind Sidebar Tabs
   bindTabEvents((tabKey) => {
     const currentState = history.getCurrentState();
     currentState.activeTab = tabKey;
@@ -163,6 +221,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!state.gradient) state.gradient = {};
     state.gradient.angle = Number(e.target.value);
     history.pushState(state);
+  });
+
+  $("#add-stop-btn")?.addEventListener("click", () => {
+    const state = history.getCurrentState();
+    if (!state.gradient.stops) state.gradient.stops = [];
+    state.gradient.stops.push({
+      color: getRandomHex(),
+      position: 50,
+    });
+    history.pushState(state);
+    renderGradientStopsList(state.gradient.stops);
   });
 
   // Image Inputs & Drop Zone
@@ -223,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
     history.pushState(state);
   });
 
-  // Randomize Trigger
+  // Randomize Trigger Function
   const triggerRandomize = () => {
     const state = history.getCurrentState();
     if (state.activeTab === "solid") {
@@ -234,6 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
         { color: getRandomHex(), position: 0 },
         { color: getRandomHex(), position: 100 },
       ];
+      renderGradientStopsList(state.gradient.stops);
     } else if (state.activeTab === "mesh") {
       state.mesh.bgColor = getRandomHex();
       state.mesh.points.forEach((p) => {
@@ -241,6 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
         p.x = Math.floor(Math.random() * 80) + 10;
         p.y = Math.floor(Math.random() * 80) + 10;
       });
+      renderMeshControlsList(state.mesh.points);
     }
     history.pushState(state);
     showToast("Theme randomized!");
@@ -248,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("#randomize-btn")?.addEventListener("click", triggerRandomize);
 
-  // Export PNG
+  // Download PNG Handler
   $("#download-png-btn")?.addEventListener("click", async () => {
     const resolution = $("#resolution-select")?.value || "1080p";
     let width = 1920;
@@ -287,6 +358,30 @@ document.addEventListener("DOMContentLoaded", () => {
     onRandomize: triggerRandomize,
     onExport: () => $("#export-code-btn")?.click(),
     onToggleHelp: toggleShortcutsModal,
+  });
+
+  // Load Presets
+  loadPresets($("#presets-grid"), (preset) => {
+    const state = history.getCurrentState();
+    state.activeTab = preset.type;
+    state[preset.type] = preset.config;
+
+    $$(".tab-btn").forEach((b) => b.classList.remove("active"));
+    $$(".tab-panel").forEach((p) => {
+      p.classList.remove("active");
+      p.classList.add("hidden");
+    });
+
+    const activeBtn = $(`[data-tab="${preset.type}"]`);
+    const activePanel = $(`#panel-${preset.type}`);
+
+    if (activeBtn) activeBtn.classList.add("active");
+    if (activePanel) {
+      activePanel.classList.remove("hidden");
+      activePanel.classList.add("active");
+    }
+
+    history.pushState(state);
   });
 
   setupExportModal(() => currentGeneratedCode);
