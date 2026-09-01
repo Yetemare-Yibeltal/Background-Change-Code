@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Midnight Neon",
+    "type": "gradient",
+    "config": {
+      "type": "linear",
+      "angle": 135,
+      "stops": [
+        { "color": "#0f172a", "offset": 0 },
+        { "color": "#581c87", "offset": 50 },
+        { "color": "#0e7490", "offset": 100 }
+      ]
+    }
+  },
+  {
+    "name": "Sunset Ember",
+    "type": "gradient",
+    "config": {
+      "type": "linear",
+      "angle": 45,
+      "stops": [
+        { "color": "#f97316", "offset": 0 },
+        { "color": "#dc2626", "offset": 50 },
+        { "color": "#7c2d12", "offset": 100 }
+      ]
+    }
+  },
+  {
+    "name": "Retro Grid",
+    "type": "pattern",
+    "config": {
+      "style": "grid",
+      "fgColor": "#38bdf8",
+      "bgColor": "#090d16",
+      "scale": 40
+    }
+  },
+  {
+    "name": "Emerald Solid",
+    "type": "solid",
+    "config": {
+      "color": "#059669",
+      "opacity": 100
+    }
+  }
+]
