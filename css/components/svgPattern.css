@@ -1,0 +1,63 @@
+.svg-upload-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 1.5rem;
+  text-align: center;
+  background-color: var(--bg-dark-800);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.svg-upload-zone:hover,
+.svg-upload-zone.drag-over {
+  border-color: var(--accent-primary);
+  background-color: var(--bg-dark-700);
+}
+
+.svg-preview-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 0.75rem auto;
+  border-radius: var(--border-radius-sm);
+  background-color: var(--bg-dark-900);
+  border: 1px solid var(--border-color);
+  padding: 8px;
+}
+
+.svg-preview-box svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tiling-grid-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tiling-option-btn {
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  background-color: var(--bg-dark-800);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-light);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.tiling-option-btn:hover {
+  border-color: var(--accent-primary);
+}
+
+.tiling-option-btn.active {
+  background-color: var(--accent-primary);
+  color: #ffffff;
+  border-color: var(--accent-primary);
+}
