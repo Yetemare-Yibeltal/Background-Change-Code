@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/components/canvas.css">
   <link rel="stylesheet" href="css/components/controls.css">
   <link rel="stylesheet" href="css/components/modal.css">
+  <link rel="stylesheet" href="css/components/shortcutsModal.css">
   <link rel="stylesheet" href="css/components/toast.css">
 </head>
 <body>
@@ -21,6 +22,7 @@
         <h1>AuraStudio</h1>
       </div>
       <div class="header-actions">
+        <button id="shortcuts-btn" class="btn btn-secondary btn-icon" title="Keyboard Shortcuts (?)">⌨️</button>
         <button id="undo-btn" class="btn btn-secondary btn-icon" title="Undo (Ctrl+Z)" disabled>↩</button>
         <button id="redo-btn" class="btn btn-secondary btn-icon" title="Redo (Ctrl+Y)" disabled>↪</button>
         <button id="randomize-btn" class="btn btn-secondary">Randomize</button>
@@ -156,6 +158,40 @@
       <footer class="modal-footer">
         <button id="copy-code-btn" class="btn btn-primary">Copy CSS</button>
       </footer>
+    </div>
+  </div>
+
+  <!-- Shortcuts Cheat Sheet Modal -->
+  <div id="shortcuts-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <header class="modal-header">
+        <h3>Keyboard Shortcuts</h3>
+        <button id="close-shortcuts-modal-btn" class="close-btn">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="shortcuts-grid">
+          <div class="shortcut-row">
+            <span class="shortcut-label">Undo action</span>
+            <div class="shortcut-keys"><kbd>Ctrl</kbd><span>+</span><kbd>Z</kbd></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Redo action</span>
+            <div class="shortcut-keys"><kbd>Ctrl</kbd><span>+</span><kbd>Y</kbd></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Randomize theme</span>
+            <div class="shortcut-keys"><kbd>R</kbd></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Export CSS code</span>
+            <div class="shortcut-keys"><kbd>E</kbd></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Toggle shortcut help</span>
+            <div class="shortcut-keys"><kbd>Shift</kbd><span>+</span><kbd>?</kbd></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
