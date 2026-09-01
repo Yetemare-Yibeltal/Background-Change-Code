@@ -1,48 +1,89 @@
-import { $, $$ } from '../utils/domUtils.js';
-import { createSolidBackground } from './solidColor.js';
-import { createGradientBackground } from './gradientEngine.js';
-import { createPatternBackground } from './patternGenerator.js';
-import { createImageBackground } from './imageUploader.js';
+import { $ } from "../utils/domUtils.js";
+import { processSvgPattern } from "./svgPatternEngine.js";
+import { generateMeshCss, renderMeshHandles } from "./meshGradientEngine.js";
 
-export function renderPreview(state) {
-  const canvas = $('#preview-canvas');
-  let result = { css: {}, code: '' };
+export function renderPreview(state, onMeshPointDrag) {
+  const canvas = $("#preview-canvas");
+  if (!canvas) return "";
 
-  switch (state.activeTab) {
-    case 'solid':
-      result = createSolidBackground(state.solid);
-      break;
-    case 'gradient':
-      result = createGradientBackground(state.gradient);
-      break;
-    case 'pattern':
-      result = createPatternBackground(state.pattern);
-      break;
-    case 'image':
-      result = createImageBackground(state.image);
-      break;
-    default:
-      result = createSolidBackground(state.solid);
+  canvas.style.cssText = ""; // Clear prior inline styles
+
+  // Clean handles when switching tabs
+  canvas.querySelectorAll(".mesh-point-handle").forEach((el) => el.remove());
+
+  let generatedCss = "";
+
+  if (state.activeTab === "solid") {
+    const color = state.solid?.color || "#4f46e5";
+    canvas.style.backgroundColor = color;
+    generatedCss = `background-color: ${color};`;
+  } else if (state.activeTab === "gradient") {
+    const { type, angle, stops } = state.gradient;
+    const stopString = stops.map((s) => `${s.color} ${s.position}%`).join(", ");
+    const bgString =
+      type === "linear"
+        ? `linear-gradient(${angle}deg, ${stopString})`
+        : `${type}-gradient(circle, ${stopString})`;
+
+    canvas.style.backgroundImage = bgString;
+    generatedCss = `background-image: ${bgString};`;
+  } else if (state.activeTab === "mesh") {
+    const { bgColor, blur, points } = state.mesh || {};
+    canvas.style.backgroundColor = bgColor || "#0f172a";
+
+    const meshConfig = generateMeshCss(points, blur || 0);
+    if (meshConfig) {
+      canvas.style.backgroundImage = meshConfig.backgroundImage;
+      canvas.style.filter = meshConfig.filter;
+      generatedCss = `background-color: ${bgColor || "#0f172a"};\nbackground-image: ${meshConfig.backgroundImage};\nfilter: ${meshConfig.filter};`;
+    }
+
+    if (onMeshPointDrag) {
+      renderMeshHandles(canvas, points || [], onMeshPointDrag);
+    }
+  } else if (state.activeTab === "svg") {
+    const { rawSvg, bgColor, fillColor, opacity, tileSize, tileMode } =
+      state.svgPattern || {};
+    canvas.style.backgroundColor = bgColor || "#0f172a";
+
+    if (rawSvg) {
+      const patternConfig = processSvgPattern(
+        rawSvg,
+        fillColor,
+        opacity,
+        100,
+        tileSize,
+        tileMode,
+      );
+      if (patternConfig) {
+        canvas.style.backgroundImage = patternConfig.backgroundImage;
+        canvas.style.backgroundSize = patternConfig.backgroundSize;
+        canvas.style.backgroundRepeat = patternConfig.backgroundRepeat;
+
+        generatedCss = `background-color: ${bgColor};\nbackground-image: ${patternConfig.backgroundImage};\nbackground-size: ${patternConfig.backgroundSize};\nbackground-repeat: ${patternConfig.backgroundRepeat};`;
+      }
+    } else {
+      generatedCss = `background-color: ${bgColor || "#0f172a"};`;
+    }
   }
 
-  canvas.style.background = result.css.background;
-  canvas.style.filter = result.css.filter;
-
-  return result.code;
+  return generatedCss;
 }
 
 export function bindTabEvents(onTabChange) {
-  $$('.tab-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
-      const tabKey = e.target.getAttribute('data-tab');
-      
-      $$('.tab-btn').forEach(b => b.classList.remove('active'));
-      $$('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tabs = document.querySelectorAll(".tab-btn");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", (e) => {
+      tabs.forEach((t) => t.classList.remove("active"));
+      document
+        .querySelectorAll(".tab-panel")
+        .forEach((p) => p.classList.remove("active"));
 
-      e.target.classList.add('active');
-      $(`#panel-${tabKey}`)?.classList.add('active');
+      const targetTab = e.currentTarget.getAttribute("data-tab");
+      e.currentTarget.classList.add("active");
+      $(`#panel-${targetTab}`)?.classList.add("active");
 
-      onTabChange(tabKey);
+      if (onTabChange) onTabChange(targetTab);
     });
   });
 }
