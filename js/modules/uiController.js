@@ -1,24 +1,24 @@
-import { $, $$ } from "../utils/domUtils.js";
-import { createSolidBackground } from "./solidColor.js";
-import { createGradientBackground } from "./gradientEngine.js";
-import { createPatternBackground } from "./patternGenerator.js";
-import { createImageBackground } from "./imageUploader.js";
+import { $, $$ } from '../utils/domUtils.js';
+import { createSolidBackground } from './solidColor.js';
+import { createGradientBackground } from './gradientEngine.js';
+import { createPatternBackground } from './patternGenerator.js';
+import { createImageBackground } from './imageUploader.js';
 
 export function renderPreview(state) {
-  const canvas = $("#preview-canvas");
-  let result = { css: {}, code: "" };
+  const canvas = $('#preview-canvas');
+  let result = { css: {}, code: '' };
 
   switch (state.activeTab) {
-    case "solid":
+    case 'solid':
       result = createSolidBackground(state.solid);
       break;
-    case "gradient":
+    case 'gradient':
       result = createGradientBackground(state.gradient);
       break;
-    case "pattern":
+    case 'pattern':
       result = createPatternBackground(state.pattern);
       break;
-    case "image":
+    case 'image':
       result = createImageBackground(state.image);
       break;
     default:
@@ -32,15 +32,15 @@ export function renderPreview(state) {
 }
 
 export function bindTabEvents(onTabChange) {
-  $$(".tab-btn").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      const tabKey = e.target.getAttribute("data-tab");
+  $$('.tab-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const tabKey = e.target.getAttribute('data-tab');
+      
+      $$('.tab-btn').forEach(b => b.classList.remove('active'));
+      $$('.tab-panel').forEach(p => p.classList.remove('active'));
 
-      $$(".tab-btn").forEach((b) => b.classList.remove("active"));
-      $$(".tab-panel").forEach((p) => p.classList.remove("active"));
-
-      e.target.classList.add("active");
-      $(`#panel-${tabKey}`)?.classList.add("active");
+      e.target.classList.add('active');
+      $(`#panel-${tabKey}`)?.classList.add('active');
 
       onTabChange(tabKey);
     });
