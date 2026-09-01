@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const savedState = loadStateFromStorage();
   const initialState = savedState || {
     ...DEFAULT_CONFIG,
+    activeTab: "solid",
     image: {
       url: "",
       blur: 0,
@@ -103,8 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
         renderMeshControlsList(state.mesh.points);
       }
 
-      $("#undo-btn").disabled = !canUndo;
-      $("#redo-btn").disabled = !canRedo;
+      const undoBtn = $("#undo-btn");
+      const redoBtn = $("#redo-btn");
+      if (undoBtn) undoBtn.disabled = !canUndo;
+      if (redoBtn) redoBtn.disabled = !canRedo;
     },
   );
 
@@ -150,15 +153,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const handleImageFile = (file) => {
     if (!file || !file.type.startsWith("image/")) {
-      showToast("Please upload a valid image file");
+      showToast("Please select a valid image file");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const state = history.getCurrentState();
+      state.activeTab = "image";
       if (!state.image) state.image = {};
       state.image.url = e.target.result;
+
       history.pushState(state);
       showToast("Image uploaded successfully!");
     };
@@ -210,7 +215,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#mesh-blur")?.addEventListener("input", (e) => {
     const state = history.getCurrentState();
     state.mesh.blur = Number(e.target.value);
-    $("#mesh-blur-val").textContent = e.target.value;
+    const blurValLabel = $("#mesh-blur-val");
+    if (blurValLabel) blurValLabel.textContent = e.target.value;
     history.pushState(state);
   });
 
@@ -297,9 +303,19 @@ document.addEventListener("DOMContentLoaded", () => {
     state[preset.type] = preset.config;
 
     $$(".tab-btn").forEach((b) => b.classList.remove("active"));
-    $$(".tab-panel").forEach((p) => p.classList.remove("active"));
-    $(`[data-tab="${preset.type}"]`).classList.add("active");
-    $(`#panel-${preset.type}`).classList.add("active");
+    $$(".tab-panel").forEach((p) => {
+      p.classList.remove("active");
+      p.classList.add("hidden");
+    });
+
+    const activeBtn = $(`[data-tab="${preset.type}"]`);
+    const activePanel = $(`#panel-${preset.type}`);
+
+    if (activeBtn) activeBtn.classList.add("active");
+    if (activePanel) {
+      activePanel.classList.remove("hidden");
+      activePanel.classList.add("active");
+    }
 
     history.pushState(state);
   });
