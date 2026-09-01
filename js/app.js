@@ -17,6 +17,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialState = savedState || {
     ...DEFAULT_CONFIG,
     activeTab: "solid",
+    solid: {
+      color: "#4f46e5",
+      opacity: 100,
+    },
+    gradient: {
+      type: "linear",
+      angle: 90,
+      stops: [
+        { color: "#4f46e5", position: 0 },
+        { color: "#9333ea", position: 100 },
+      ],
+    },
     image: {
       url: "",
       blur: 0,
@@ -116,11 +128,8 @@ document.addEventListener("DOMContentLoaded", () => {
     history.getCurrentState(),
     handleMeshDrag,
   );
-  if (history.getCurrentState().mesh) {
-    renderMeshControlsList(history.getCurrentState().mesh.points);
-  }
 
-  // Bind Sidebar Tabs
+  // Tab switching
   bindTabEvents((tabKey) => {
     const currentState = history.getCurrentState();
     currentState.activeTab = tabKey;
@@ -128,28 +137,37 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Solid Inputs
-  const solidColorInput = $("#solid-color-input");
-  const solidHexInput = $("#solid-hex-input");
-  const solidOpacityInput = $("#solid-opacity");
-
-  solidColorInput?.addEventListener("input", (e) => {
+  $("#solid-color-input")?.addEventListener("input", (e) => {
     const state = history.getCurrentState();
     state.solid.color = e.target.value;
-    if (solidHexInput) solidHexInput.value = e.target.value;
+    if ($("#solid-hex-input")) $("#solid-hex-input").value = e.target.value;
     history.pushState(state);
   });
 
-  solidOpacityInput?.addEventListener("input", (e) => {
+  $("#solid-opacity")?.addEventListener("input", (e) => {
     const state = history.getCurrentState();
     state.solid.opacity = Number(e.target.value);
     history.pushState(state);
   });
 
-  // Image Inputs & Drop Zone Handler
+  // Gradient Inputs
+  $("#gradient-type")?.addEventListener("change", (e) => {
+    const state = history.getCurrentState();
+    if (!state.gradient) state.gradient = {};
+    state.gradient.type = e.target.value;
+    history.pushState(state);
+  });
+
+  $("#gradient-angle")?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    if (!state.gradient) state.gradient = {};
+    state.gradient.angle = Number(e.target.value);
+    history.pushState(state);
+  });
+
+  // Image Inputs & Drop Zone
   const imageFileInput = $("#image-file-input");
   const imageDropZone = $("#drop-zone");
-  const imageBlurInput = $("#image-blur");
-  const imageBrightnessInput = $("#image-brightness");
 
   const handleImageFile = (file) => {
     if (!file || !file.type.startsWith("image/")) {
@@ -191,54 +209,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.dataTransfer.files.length) handleImageFile(e.dataTransfer.files[0]);
   });
 
-  imageBlurInput?.addEventListener("input", (e) => {
+  $("#image-blur")?.addEventListener("input", (e) => {
     const state = history.getCurrentState();
     if (!state.image) state.image = {};
     state.image.blur = Number(e.target.value);
     history.pushState(state);
   });
 
-  imageBrightnessInput?.addEventListener("input", (e) => {
+  $("#image-brightness")?.addEventListener("input", (e) => {
     const state = history.getCurrentState();
     if (!state.image) state.image = {};
     state.image.brightness = Number(e.target.value);
     history.pushState(state);
   });
 
-  // Mesh Controls
-  $("#mesh-bg-color")?.addEventListener("input", (e) => {
-    const state = history.getCurrentState();
-    state.mesh.bgColor = e.target.value;
-    history.pushState(state);
-  });
-
-  $("#mesh-blur")?.addEventListener("input", (e) => {
-    const state = history.getCurrentState();
-    state.mesh.blur = Number(e.target.value);
-    const blurValLabel = $("#mesh-blur-val");
-    if (blurValLabel) blurValLabel.textContent = e.target.value;
-    history.pushState(state);
-  });
-
-  $("#add-mesh-point-btn")?.addEventListener("click", () => {
-    const state = history.getCurrentState();
-    state.mesh.points.push({
-      x: Math.floor(Math.random() * 80) + 10,
-      y: Math.floor(Math.random() * 80) + 10,
-      color: getRandomHex(),
-    });
-    history.pushState(state);
-    renderMeshControlsList(state.mesh.points);
-  });
-
-  // Randomize Trigger Function
+  // Randomize Trigger
   const triggerRandomize = () => {
     const state = history.getCurrentState();
     if (state.activeTab === "solid") {
       const newHex = getRandomHex();
       state.solid.color = newHex;
-      if (solidColorInput) solidColorInput.value = newHex;
-      if (solidHexInput) solidHexInput.value = newHex;
+    } else if (state.activeTab === "gradient") {
+      state.gradient.stops = [
+        { color: getRandomHex(), position: 0 },
+        { color: getRandomHex(), position: 100 },
+      ];
     } else if (state.activeTab === "mesh") {
       state.mesh.bgColor = getRandomHex();
       state.mesh.points.forEach((p) => {
@@ -246,7 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
         p.x = Math.floor(Math.random() * 80) + 10;
         p.y = Math.floor(Math.random() * 80) + 10;
       });
-      renderMeshControlsList(state.mesh.points);
     }
     history.pushState(state);
     showToast("Theme randomized!");
@@ -254,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("#randomize-btn")?.addEventListener("click", triggerRandomize);
 
-  // Download PNG Handler
+  // Export PNG
   $("#download-png-btn")?.addEventListener("click", async () => {
     const resolution = $("#resolution-select")?.value || "1080p";
     let width = 1920;
@@ -287,37 +281,12 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleShortcutsModal,
   );
 
-  // Register Keyboard Shortcuts
   registerKeyboardShortcuts({
     onUndo: () => history.canUndo() && history.undo(),
     onRedo: () => history.canRedo() && history.redo(),
     onRandomize: triggerRandomize,
     onExport: () => $("#export-code-btn")?.click(),
     onToggleHelp: toggleShortcutsModal,
-  });
-
-  // Load Presets
-  loadPresets($("#presets-grid"), (preset) => {
-    const state = history.getCurrentState();
-    state.activeTab = preset.type;
-    state[preset.type] = preset.config;
-
-    $$(".tab-btn").forEach((b) => b.classList.remove("active"));
-    $$(".tab-panel").forEach((p) => {
-      p.classList.remove("active");
-      p.classList.add("hidden");
-    });
-
-    const activeBtn = $(`[data-tab="${preset.type}"]`);
-    const activePanel = $(`#panel-${preset.type}`);
-
-    if (activeBtn) activeBtn.classList.add("active");
-    if (activePanel) {
-      activePanel.classList.remove("hidden");
-      activePanel.classList.add("active");
-    }
-
-    history.pushState(state);
   });
 
   setupExportModal(() => currentGeneratedCode);
