@@ -7,6 +7,7 @@ import { renderPreview, bindTabEvents } from "./modules/uiController.js";
 import { loadPresets } from "./modules/presetManager.js";
 import { setupExportModal } from "./modules/exportEngine.js";
 import { exportBackgroundAsPng } from "./utils/canvasExporter.js";
+import { registerKeyboardShortcuts } from "./modules/keyboardController.js";
 import { showToast } from "./utils/domUtils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -47,8 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
     history.pushState(state);
   });
 
-  // Randomize Button
-  $("#randomize-btn")?.addEventListener("click", () => {
+  // Randomize Trigger Function
+  const triggerRandomize = () => {
     const state = history.getCurrentState();
     if (state.activeTab === "solid") {
       const newHex = getRandomHex();
@@ -60,7 +61,10 @@ document.addEventListener("DOMContentLoaded", () => {
       state.gradient.stops[1].color = getRandomHex();
     }
     history.pushState(state);
-  });
+    showToast("Theme randomized!");
+  };
+
+  $("#randomize-btn")?.addEventListener("click", triggerRandomize);
 
   // Download PNG Handler
   $("#download-png-btn")?.addEventListener("click", async () => {
@@ -84,6 +88,39 @@ document.addEventListener("DOMContentLoaded", () => {
   // Undo / Redo
   $("#undo-btn")?.addEventListener("click", () => history.undo());
   $("#redo-btn")?.addEventListener("click", () => history.redo());
+
+  // Shortcuts Modal View
+  const shortcutsModal = $("#shortcuts-modal");
+  const toggleShortcutsModal = () => {
+    shortcutsModal?.classList.toggle("hidden");
+  };
+
+  $("#shortcuts-btn")?.addEventListener("click", toggleShortcutsModal);
+  $("#close-shortcuts-modal-btn")?.addEventListener(
+    "click",
+    toggleShortcutsModal,
+  );
+
+  // Register Keyboard Shortcuts
+  registerKeyboardShortcuts({
+    onUndo: () => {
+      if (history.canUndo()) {
+        history.undo();
+        showToast("Undo");
+      }
+    },
+    onRedo: () => {
+      if (history.canRedo()) {
+        history.redo();
+        showToast("Redo");
+      }
+    },
+    onRandomize: triggerRandomize,
+    onExport: () => {
+      $("#export-code-btn")?.click();
+    },
+    onToggleHelp: toggleShortcutsModal,
+  });
 
   // Load Presets
   loadPresets($("#presets-grid"), (preset) => {
