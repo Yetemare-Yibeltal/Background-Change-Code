@@ -10,9 +10,21 @@ import { exportBackgroundAsPng } from "./utils/canvasExporter.js";
 import { registerKeyboardShortcuts } from "./modules/keyboardController.js";
 import { showToast } from "./utils/domUtils.js";
 
+const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+
 document.addEventListener("DOMContentLoaded", () => {
   const savedState = loadStateFromStorage();
-  const initialState = savedState || DEFAULT_CONFIG;
+  const initialState = savedState || {
+    ...DEFAULT_CONFIG,
+    svgPattern: {
+      rawSvg: DEFAULT_SVG,
+      bgColor: "#0f172a",
+      fillColor: "#38bdf8",
+      opacity: 80,
+      tileSize: 40,
+      tileMode: "repeat",
+    },
+  };
 
   let currentGeneratedCode = "";
 
@@ -37,28 +49,104 @@ document.addEventListener("DOMContentLoaded", () => {
     history.pushState(currentState);
   });
 
-  // Solid Inputs
-  const solidColorInput = $("#solid-color-input");
-  const solidHexInput = $("#solid-hex-input");
+  // SVG Pattern Controls Setup
+  const svgFileInput = $("#svg-file-input");
+  const svgDropZone = $("#svg-drop-zone");
+  const svgBgColor = $("#svg-bg-color");
+  const svgFillColor = $("#svg-fill-color");
+  const svgOpacity = $("#svg-opacity");
+  const svgTileSize = $("#svg-tile-size");
+  const svgPreviewBox = $("#svg-preview-container");
 
-  solidColorInput?.addEventListener("input", (e) => {
+  const updateSvgPreviewThumbnail = (svgText) => {
+    if (svgPreviewBox && svgText) {
+      svgPreviewBox.innerHTML = svgText;
+    }
+  };
+
+  updateSvgPreviewThumbnail(history.getCurrentState().svgPattern?.rawSvg);
+
+  const handleSvgFile = (file) => {
+    if (!file || !file.name.endsWith(".svg")) {
+      showToast("Please upload a valid .SVG file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const state = history.getCurrentState();
+      state.svgPattern.rawSvg = e.target.result;
+      updateSvgPreviewThumbnail(e.target.result);
+      history.pushState(state);
+      showToast("SVG Pattern loaded successfully!");
+    };
+    reader.readAsText(file);
+  };
+
+  svgFileInput?.addEventListener("change", (e) =>
+    handleSvgFile(e.target.files[0]),
+  );
+
+  svgDropZone?.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    svgDropZone.classList.add("drag-over");
+  });
+
+  svgDropZone?.addEventListener("dragleave", () =>
+    svgDropZone.classList.remove("drag-over"),
+  );
+
+  svgDropZone?.addEventListener("drop", (e) => {
+    e.preventDefault();
+    svgDropZone.classList.remove("drag-over");
+    if (e.dataTransfer.files.length) handleSvgFile(e.dataTransfer.files[0]);
+  });
+
+  svgBgColor?.addEventListener("input", (e) => {
     const state = history.getCurrentState();
-    state.solid.color = e.target.value;
-    if (solidHexInput) solidHexInput.value = e.target.value;
+    state.svgPattern.bgColor = e.target.value;
     history.pushState(state);
+  });
+
+  svgFillColor?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    state.svgPattern.fillColor = e.target.value;
+    history.pushState(state);
+  });
+
+  svgOpacity?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    state.svgPattern.opacity = Number(e.target.value);
+    history.pushState(state);
+  });
+
+  svgTileSize?.addEventListener("input", (e) => {
+    const state = history.getCurrentState();
+    state.svgPattern.tileSize = Number(e.target.value);
+    $("#svg-size-val").textContent = e.target.value;
+    history.pushState(state);
+  });
+
+  $$(".tiling-option-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      $$(".tiling-option-btn").forEach((b) => b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      const mode = e.currentTarget.getAttribute("data-mode");
+      const state = history.getCurrentState();
+      state.svgPattern.tileMode = mode;
+      history.pushState(state);
+    });
   });
 
   // Randomize Trigger Function
   const triggerRandomize = () => {
     const state = history.getCurrentState();
     if (state.activeTab === "solid") {
-      const newHex = getRandomHex();
-      state.solid.color = newHex;
-      if (solidColorInput) solidColorInput.value = newHex;
-      if (solidHexInput) solidHexInput.value = newHex;
-    } else if (state.activeTab === "gradient") {
-      state.gradient.stops[0].color = getRandomHex();
-      state.gradient.stops[1].color = getRandomHex();
+      state.solid.color = getRandomHex();
+    } else if (state.activeTab === "svg") {
+      state.svgPattern.bgColor = getRandomHex();
+      state.svgPattern.fillColor = getRandomHex();
+      if (svgBgColor) svgBgColor.value = state.svgPattern.bgColor;
+      if (svgFillColor) svgFillColor.value = state.svgPattern.fillColor;
     }
     history.pushState(state);
     showToast("Theme randomized!");
@@ -89,11 +177,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#undo-btn")?.addEventListener("click", () => history.undo());
   $("#redo-btn")?.addEventListener("click", () => history.redo());
 
-  // Shortcuts Modal View
+  // Shortcuts Modal
   const shortcutsModal = $("#shortcuts-modal");
-  const toggleShortcutsModal = () => {
-    shortcutsModal?.classList.toggle("hidden");
-  };
+  const toggleShortcutsModal = () => shortcutsModal?.classList.toggle("hidden");
 
   $("#shortcuts-btn")?.addEventListener("click", toggleShortcutsModal);
   $("#close-shortcuts-modal-btn")?.addEventListener(
@@ -103,22 +189,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Register Keyboard Shortcuts
   registerKeyboardShortcuts({
-    onUndo: () => {
-      if (history.canUndo()) {
-        history.undo();
-        showToast("Undo");
-      }
-    },
-    onRedo: () => {
-      if (history.canRedo()) {
-        history.redo();
-        showToast("Redo");
-      }
-    },
+    onUndo: () => history.canUndo() && history.undo(),
+    onRedo: () => history.canRedo() && history.redo(),
     onRandomize: triggerRandomize,
-    onExport: () => {
-      $("#export-code-btn")?.click();
-    },
+    onExport: () => $("#export-code-btn")?.click(),
     onToggleHelp: toggleShortcutsModal,
   });
 
@@ -136,6 +210,5 @@ document.addEventListener("DOMContentLoaded", () => {
     history.pushState(state);
   });
 
-  // Export Modal Setup
   setupExportModal(() => currentGeneratedCode);
 });
