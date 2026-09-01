@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="css/components/controls.css">
   <link rel="stylesheet" href="css/components/modal.css">
   <link rel="stylesheet" href="css/components/shortcutsModal.css">
+  <link rel="stylesheet" href="css/components/svgPattern.css">
+  <link rel="stylesheet" href="css/components/meshGradient.css">
   <link rel="stylesheet" href="css/components/toast.css">
 </head>
 <body>
@@ -41,7 +43,9 @@
         <nav class="sidebar-tabs">
           <button class="tab-btn active" data-tab="solid">Solid</button>
           <button class="tab-btn" data-tab="gradient">Gradient</button>
+          <button class="tab-btn" data-tab="mesh">Mesh</button>
           <button class="tab-btn" data-tab="pattern">Pattern</button>
+          <button class="tab-btn" data-tab="svg">SVG Tile</button>
           <button class="tab-btn" data-tab="image">Image</button>
           <button class="tab-btn" data-tab="presets">Presets</button>
         </nav>
@@ -83,6 +87,23 @@
             </div>
           </section>
 
+          <!-- Mesh Gradient Section -->
+          <section id="panel-mesh" class="tab-panel">
+            <div class="control-group">
+              <label for="mesh-bg-color">Base Background Color</label>
+              <input type="color" id="mesh-bg-color" value="#0f172a">
+            </div>
+            <div class="control-group">
+              <label for="mesh-blur">Diffusion Blur (<span id="mesh-blur-val">20</span>px)</label>
+              <input type="range" id="mesh-blur" min="0" max="60" value="20">
+            </div>
+            <div class="control-group">
+              <label>Color Anchors</label>
+              <div id="mesh-anchors-list" class="mesh-anchors-container"></div>
+              <button id="add-mesh-point-btn" class="btn btn-small">+ Add Color Point</button>
+            </div>
+          </section>
+
           <!-- Pattern Section -->
           <section id="panel-pattern" class="tab-panel">
             <div class="control-group">
@@ -105,6 +126,44 @@
             <div class="control-group">
               <label for="pattern-scale">Scale</label>
               <input type="range" id="pattern-scale" min="10" max="100" value="30">
+            </div>
+          </section>
+
+          <!-- Custom SVG Tile Section -->
+          <section id="panel-svg" class="tab-panel">
+            <div class="control-group">
+              <label>Custom Vector SVG</label>
+              <div id="svg-drop-zone" class="svg-upload-zone">
+                <div id="svg-preview-container" class="svg-preview-box">
+                  <span>🎨</span>
+                </div>
+                <p>Drag & drop <strong>.SVG</strong> file here or click to upload</p>
+                <input type="file" id="svg-file-input" accept=".svg,image/svg+xml" class="file-input">
+              </div>
+            </div>
+            <div class="control-group">
+              <label for="svg-bg-color">Background Base Color</label>
+              <input type="color" id="svg-bg-color" value="#0f172a">
+            </div>
+            <div class="control-group">
+              <label for="svg-fill-color">SVG Tint Color</label>
+              <input type="color" id="svg-fill-color" value="#38bdf8">
+            </div>
+            <div class="control-group">
+              <label for="svg-opacity">Vector Opacity</label>
+              <input type="range" id="svg-opacity" min="0" max="100" value="80">
+            </div>
+            <div class="control-group">
+              <label for="svg-tile-size">Tile Size (<span id="svg-size-val">40</span>px)</label>
+              <input type="range" id="svg-tile-size" min="10" max="200" value="40">
+            </div>
+            <div class="control-group">
+              <label>Tiling Mode</label>
+              <div class="tiling-grid-selector">
+                <button class="tiling-option-btn active" data-mode="repeat">Repeat</button>
+                <button class="tiling-option-btn" data-mode="space">Space</button>
+                <button class="tiling-option-btn" data-mode="round">Round</button>
+              </div>
             </div>
           </section>
 
