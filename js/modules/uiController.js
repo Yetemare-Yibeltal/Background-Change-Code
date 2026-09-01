@@ -6,7 +6,7 @@ export function renderPreview(state, onMeshPointDrag) {
   const canvas = $("#preview-canvas");
   if (!canvas) return "";
 
-  // Preserve core layout while resetting inline canvas styles
+  // Reset core styles
   canvas.style.backgroundColor = "";
   canvas.style.backgroundImage = "";
   canvas.style.backgroundSize = "";
@@ -18,9 +18,8 @@ export function renderPreview(state, onMeshPointDrag) {
   // Clean handles when switching tabs
   canvas.querySelectorAll(".mesh-point-handle").forEach((el) => el.remove());
 
-  // Show/hide center card dynamically
   const centerCard = canvas.querySelector(
-    ".live-preview-card, #preview-card, div",
+    ".live-preview-card, #preview-card, .preview-center-text",
   );
 
   let generatedCss = "";
@@ -111,7 +110,7 @@ export function renderPreview(state, onMeshPointDrag) {
       canvas.style.backgroundImage = `url("${url}")`;
       canvas.style.backgroundSize = "cover";
       canvas.style.backgroundPosition = "center";
-      canvas.style.filter = `blur(${blur}px) brightness(${brightness}%)`;
+      canvas.style.filter = `blur(${blur}px) brightness(${brightness}%);`;
 
       generatedCss = `background-image: url("${url}");\nbackground-size: cover;\nbackground-position: center;\nfilter: blur(${blur}px) brightness(${brightness}%);`;
     } else {
