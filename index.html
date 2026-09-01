@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraStudio — Advanced Background & Pattern Generator</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components/sidebar.css">
+  <link rel="stylesheet" href="css/components/canvas.css">
+  <link rel="stylesheet" href="css/components/controls.css">
+  <link rel="stylesheet" href="css/components/modal.css">
+  <link rel="stylesheet" href="css/components/toast.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <header class="app-header">
+      <div class="brand">
+        <span class="logo-icon">✨</span>
+        <h1>AuraStudio</h1>
+      </div>
+      <div class="header-actions">
+        <button id="undo-btn" class="btn btn-secondary btn-icon" title="Undo (Ctrl+Z)" disabled>↩</button>
+        <button id="redo-btn" class="btn btn-secondary btn-icon" title="Redo (Ctrl+Y)" disabled>↪</button>
+        <button id="randomize-btn" class="btn btn-secondary">Randomize</button>
+        <button id="export-code-btn" class="btn btn-primary">Export Code</button>
+      </div>
+    </header>
+
+    <main class="app-body">
+      <aside class="sidebar">
+        <nav class="sidebar-tabs">
+          <button class="tab-btn active" data-tab="solid">Solid</button>
+          <button class="tab-btn" data-tab="gradient">Gradient</button>
+          <button class="tab-btn" data-tab="pattern">Pattern</button>
+          <button class="tab-btn" data-tab="image">Image</button>
+          <button class="tab-btn" data-tab="presets">Presets</button>
+        </nav>
+
+        <div class="sidebar-content">
+          <!-- Solid Section -->
+          <section id="panel-solid" class="tab-panel active">
+            <div class="control-group">
+              <label for="solid-color-input">Background Color</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="solid-color-input" value="#4f46e5">
+                <input type="text" id="solid-hex-input" class="text-input" value="#4f46e5">
+              </div>
+            </div>
+            <div class="control-group">
+              <label for="solid-opacity">Opacity</label>
+              <input type="range" id="solid-opacity" min="0" max="100" value="100">
+            </div>
+          </section>
+
+          <!-- Gradient Section -->
+          <section id="panel-gradient" class="tab-panel">
+            <div class="control-group">
+              <label for="gradient-type">Gradient Type</label>
+              <select id="gradient-type" class="select-input">
+                <option value="linear">Linear</option>
+                <option value="radial">Radial</option>
+                <option value="conic">Conic</option>
+              </select>
+            </div>
+            <div class="control-group" id="angle-control-group">
+              <label for="gradient-angle">Angle (<span id="angle-value">90</span>°)</label>
+              <input type="range" id="gradient-angle" min="0" max="360" value="90">
+            </div>
+            <div class="control-group">
+              <label>Color Stops</label>
+              <div id="gradient-stops-list" class="stops-container"></div>
+              <button id="add-stop-btn" class="btn btn-small">+ Add Stop</button>
+            </div>
+          </section>
+
+          <!-- Pattern Section -->
+          <section id="panel-pattern" class="tab-panel">
+            <div class="control-group">
+              <label for="pattern-select">Pattern Style</label>
+              <select id="pattern-select" class="select-input">
+                <option value="dots">Polka Dots</option>
+                <option value="grid">Grid Mesh</option>
+                <option value="waves">Topographic Waves</option>
+                <option value="stripes">Diagonal Stripes</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="pattern-fg-color">Pattern Color</label>
+              <input type="color" id="pattern-fg-color" value="#ffffff">
+            </div>
+            <div class="control-group">
+              <label for="pattern-bg-color">Base Color</label>
+              <input type="color" id="pattern-bg-color" value="#1e1b4b">
+            </div>
+            <div class="control-group">
+              <label for="pattern-scale">Scale</label>
+              <input type="range" id="pattern-scale" min="10" max="100" value="30">
+            </div>
+          </section>
+
+          <!-- Image Section -->
+          <section id="panel-image" class="tab-panel">
+            <div class="control-group">
+              <label>Upload Custom Background</label>
+              <div id="drop-zone" class="drop-zone">
+                <p>Drag & drop image here or <span>browse</span></p>
+                <input type="file" id="image-file-input" accept="image/*" class="file-input">
+              </div>
+            </div>
+            <div class="control-group">
+              <label for="image-blur">Blur Effect</label>
+              <input type="range" id="image-blur" min="0" max="20" value="0">
+            </div>
+            <div class="control-group">
+              <label for="image-brightness">Brightness</label>
+              <input type="range" id="image-brightness" min="0" max="200" value="100">
+            </div>
+          </section>
+
+          <!-- Presets Section -->
+          <section id="panel-presets" class="tab-panel">
+            <div id="presets-grid" class="presets-grid"></div>
+          </section>
+        </div>
+      </aside>
+
+      <section class="canvas-viewport">
+        <div id="preview-canvas" class="preview-canvas">
+          <div class="canvas-overlay">
+            <h2>Live Preview</h2>
+            <p>Customize controls on the left to transform this view</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Export Code Modal -->
+  <div id="export-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <header class="modal-header">
+        <h3>Export CSS Code</h3>
+        <button id="close-modal-btn" class="close-btn">&times;</button>
+      </header>
+      <div class="modal-body">
+        <pre><code id="css-code-output">/* CSS snippet will appear here */</code></pre>
+      </div>
+      <footer class="modal-footer">
+        <button id="copy-code-btn" class="btn btn-primary">Copy CSS</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
