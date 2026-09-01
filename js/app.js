@@ -6,6 +6,8 @@ import { HistoryManager } from "./modules/historyManager.js";
 import { renderPreview, bindTabEvents } from "./modules/uiController.js";
 import { loadPresets } from "./modules/presetManager.js";
 import { setupExportModal } from "./modules/exportEngine.js";
+import { exportBackgroundAsPng } from "./utils/canvasExporter.js";
+import { showToast } from "./utils/domUtils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const savedState = loadStateFromStorage();
@@ -38,21 +40,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const solidColorInput = $("#solid-color-input");
   const solidHexInput = $("#solid-hex-input");
 
-  solidColorInput.addEventListener("input", (e) => {
+  solidColorInput?.addEventListener("input", (e) => {
     const state = history.getCurrentState();
     state.solid.color = e.target.value;
-    solidHexInput.value = e.target.value;
+    if (solidHexInput) solidHexInput.value = e.target.value;
     history.pushState(state);
   });
 
   // Randomize Button
-  $("#randomize-btn").addEventListener("click", () => {
+  $("#randomize-btn")?.addEventListener("click", () => {
     const state = history.getCurrentState();
     if (state.activeTab === "solid") {
       const newHex = getRandomHex();
       state.solid.color = newHex;
-      solidColorInput.value = newHex;
-      solidHexInput.value = newHex;
+      if (solidColorInput) solidColorInput.value = newHex;
+      if (solidHexInput) solidHexInput.value = newHex;
     } else if (state.activeTab === "gradient") {
       state.gradient.stops[0].color = getRandomHex();
       state.gradient.stops[1].color = getRandomHex();
@@ -60,9 +62,28 @@ document.addEventListener("DOMContentLoaded", () => {
     history.pushState(state);
   });
 
+  // Download PNG Handler
+  $("#download-png-btn")?.addEventListener("click", async () => {
+    const resolution = $("#resolution-select")?.value || "1080p";
+    let width = 1920;
+    let height = 1080;
+
+    if (resolution === "4k") {
+      width = 3840;
+      height = 2160;
+    } else if (resolution === "720p") {
+      width = 1280;
+      height = 720;
+    }
+
+    showToast(`Generating ${resolution.toUpperCase()} PNG...`);
+    await exportBackgroundAsPng(history.getCurrentState(), width, height);
+    showToast("Download started!");
+  });
+
   // Undo / Redo
-  $("#undo-btn").addEventListener("click", () => history.undo());
-  $("#redo-btn").addEventListener("click", () => history.redo());
+  $("#undo-btn")?.addEventListener("click", () => history.undo());
+  $("#redo-btn")?.addEventListener("click", () => history.redo());
 
   // Load Presets
   loadPresets($("#presets-grid"), (preset) => {
